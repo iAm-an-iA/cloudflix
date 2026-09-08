@@ -275,8 +275,6 @@
             android:name=".ui.ControllerActivity"
             android:exported="false" />
 
-
-
         <service
             android:name=".services.PackageInstallerService"
             android:foregroundServiceType="dataSync"
