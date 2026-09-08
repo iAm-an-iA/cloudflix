@@ -21,26 +21,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.ui.result.compose.model.AiringScheduleUiState
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @Composable
 fun MaturityRatingBadge(
     rating: String,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(2.dp))
             .background(colors.surface)
-            .border(BorderStroke(1.dp, colors.border), RoundedCornerShape(2.dp))
+            .border(BorderStroke(1.dp, colors.surfaceVariant), RoundedCornerShape(2.dp))
             .padding(horizontal = 6.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = rating,
-            color = colors.textPrimary,
+            color = colors.onBackground,
             fontSize = 12.sp,
             fontWeight = FontWeight.SemiBold
         )
@@ -52,18 +52,18 @@ fun VideoQualityBadge(
     quality: String,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(2.dp))
-            .border(BorderStroke(1.dp, colors.border), RoundedCornerShape(2.dp))
+            .border(BorderStroke(1.dp, colors.surfaceVariant), RoundedCornerShape(2.dp))
             .padding(horizontal = 6.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = quality,
-            color = colors.textSecondary,
+            color = colors.onSurfaceVariant,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold
         )
@@ -76,8 +76,8 @@ fun OngoingStatusBadge(
     statusText: String? = null,
     isOngoing: Boolean = true
 ) {
-    val colors = MovieDetailsTheme.colors
-    val badgeColor = if (isOngoing) colors.greenAccent else colors.textSecondary
+    val colors = CloudStreamTheme.colors
+    val badgeColor = if (isOngoing) colors.ongoing else colors.onSurfaceVariant
     val defaultText = stringResource(if (isOngoing) R.string.status_ongoing else R.string.status_completed)
     val displayText = (statusText ?: defaultText).uppercase()
 
@@ -114,7 +114,7 @@ fun AiringCountdownBadge(
     airingSchedule: AiringScheduleUiState,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     val countdown = rememberAiringCountdown(airingSchedule.targetUnixTimeSeconds)
         ?: airingSchedule.fallbackDateText
         ?: return
@@ -132,8 +132,8 @@ fun AiringCountdownBadge(
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(3.dp))
-            .background(colors.orangeAccent.copy(alpha = 0.15f))
-            .border(BorderStroke(1.dp, colors.orangeAccent.copy(alpha = 0.5f)), RoundedCornerShape(3.dp))
+            .background(colors.ongoing.copy(alpha = 0.15f))
+            .border(BorderStroke(1.dp, colors.ongoing.copy(alpha = 0.5f)), RoundedCornerShape(3.dp))
             .padding(horizontal = 6.dp, vertical = 2.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -147,7 +147,7 @@ fun AiringCountdownBadge(
             )
             Text(
                 text = badgeText,
-                color = colors.orangeAccent,
+                color = colors.ongoing,
                 fontSize = 11.sp,
                 fontWeight = FontWeight.Bold
             )

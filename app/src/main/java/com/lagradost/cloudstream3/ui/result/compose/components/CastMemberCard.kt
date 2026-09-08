@@ -44,11 +44,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
+import androidx.compose.material3.MaterialTheme
 import com.lagradost.cloudstream3.Actor
 import com.lagradost.cloudstream3.ActorData
 import com.lagradost.cloudstream3.ActorRole
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @Composable
 private fun CastAvatarCircle(
@@ -58,12 +59,12 @@ private fun CastAvatarCircle(
     borderWidth: Dp,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Box(
         modifier = modifier
             .size(size)
             .clip(CircleShape)
-            .background(colors.surfaceElevated)
+            .background(colors.surfaceContainer)
             .border(BorderStroke(borderWidth, borderColor), CircleShape),
         contentAlignment = Alignment.Center
     ) {
@@ -78,12 +79,12 @@ private fun CastAvatarCircle(
             Box(
                 modifier = Modifier
                     .fillMaxSize()
-                    .background(colors.surfaceElevated),
+                    .background(colors.surfaceContainer),
                 contentAlignment = Alignment.Center
             ) {
                 Text(
                     text = (actor?.name ?: "?").take(2).uppercase(),
-                    color = colors.textSecondary,
+                    color = colors.onSurfaceVariant,
                     fontSize = if (size > 60.dp) 20.sp else 14.sp,
                     fontWeight = FontWeight.Bold
                 )
@@ -100,8 +101,8 @@ private fun CastDualAvatar(
     isFocused: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
-    val mainBorderColor = if (isFocused) colors.primary else colors.border
+    val colors = CloudStreamTheme.colors
+    val mainBorderColor = if (isFocused) colors.primary else colors.surfaceVariant
 
     Box(
         modifier = modifier.size(92.dp),
@@ -134,8 +135,7 @@ private fun CastMemberInfo(
     isFocused: Boolean,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
+    val colors = CloudStreamTheme.colors
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -144,9 +144,9 @@ private fun CastMemberInfo(
     ) {
         Text(
             text = mainName,
-            style = typography.mediumSmallBody,
+            style = MaterialTheme.typography.bodySmall,
             fontWeight = FontWeight.Bold,
-            color = if (isFocused) colors.textPrimary else colors.textSecondary,
+            color = if (isFocused) colors.onBackground else colors.onSurfaceVariant,
             fontSize = 13.sp,
             textAlign = TextAlign.Center,
             maxLines = 1,
@@ -156,8 +156,8 @@ private fun CastMemberInfo(
         if (!secondaryName.isNullOrBlank()) {
             Text(
                 text = secondaryName,
-                style = typography.regularCaption2,
-                color = colors.textMuted,
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                 fontSize = 11.sp,
                 textAlign = TextAlign.Center,
                 maxLines = 1,
@@ -174,7 +174,7 @@ private fun CastMemberInfo(
             ) {
                 Text(
                     text = roleText,
-                    style = typography.regularCaption2,
+                    style = MaterialTheme.typography.labelSmall,
                     color = colors.primary,
                     fontSize = 10.sp,
                     fontWeight = FontWeight.Bold,
@@ -241,8 +241,7 @@ fun CastMemberCard(
 
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val colors = MovieDetailsTheme.colors
-    val dimens = MovieDetailsTheme.dimens
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) 1.06f else 1f,
@@ -251,9 +250,9 @@ fun CastMemberCard(
     )
 
     val border = if (isFocused) {
-        BorderStroke(dimens.borderFocus, colors.primary)
+        BorderStroke(2.dp, colors.primary)
     } else {
-        BorderStroke(1.dp, colors.border.copy(alpha = 0.35f))
+        BorderStroke(1.dp, colors.surfaceVariant.copy(alpha = 0.35f))
     }
 
     val roleText = resolveRoleText(actorData)
@@ -292,7 +291,7 @@ fun CastMemberCard(
                     scaleY = scaleState.value
                 }
                 .clip(MovieDetailsTokens.ShapeCardMedium)
-                .background(if (isFocused) colors.surfaceElevated else colors.surface)
+                .background(if (isFocused) colors.surfaceContainer else colors.surface)
                 .border(border, MovieDetailsTokens.ShapeCardMedium)
                 .padding(vertical = 12.dp, horizontal = 8.dp),
             horizontalAlignment = Alignment.CenterHorizontally,

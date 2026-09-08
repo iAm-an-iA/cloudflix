@@ -27,6 +27,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.res.painterResource
@@ -39,9 +40,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
-import com.lagradost.cloudstream3.ui.result.compose.theme.PrimaryBlack
-import com.lagradost.cloudstream3.ui.result.compose.theme.PrimaryWhite
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -55,7 +54,7 @@ fun HeroPlayButton(
     enabled: Boolean = true
 ) {
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) 1.05f else 1f,
@@ -64,7 +63,7 @@ fun HeroPlayButton(
     )
 
     val background = if (isFocused) colors.primary else colors.primary.copy(alpha = 0.92f)
-    val contentColor = colors.onPrimary
+    val contentColor = Color.White
     val border = if (isFocused) BorderStroke(2.dp, colors.onBackground) else null
 
     Box(
@@ -126,13 +125,13 @@ fun HeroPlayButton(
                             .fillMaxWidth()
                             .height(5.dp)
                             .align(Alignment.BottomCenter)
-                            .background(PrimaryBlack.copy(alpha = 0.45f))
+                            .background(Color.Black.copy(alpha = 0.45f))
                     ) {
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth(progress.coerceIn(0f, 1f))
                                 .fillMaxHeight()
-                                .background(PrimaryWhite)
+                                .background(Color.White)
                         )
                     }
                 }
@@ -150,7 +149,7 @@ fun HeroTrailerButton(
     enabled: Boolean = true
 ) {
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) 1.05f else 1f,
@@ -158,9 +157,9 @@ fun HeroTrailerButton(
         label = "heroTrailerBtnScale"
     )
 
-    val background = if (isFocused) colors.primary else colors.surfaceElevated.copy(alpha = 0.8f)
-    val contentColor = if (isFocused) colors.onPrimary else colors.textPrimary
-    val border = if (isFocused) BorderStroke(2.dp, colors.onBackground) else BorderStroke(1.dp, colors.border)
+    val background = if (isFocused) colors.primary else colors.surfaceContainer.copy(alpha = 0.8f)
+    val contentColor = if (isFocused) Color.White else colors.onBackground
+    val border = if (isFocused) BorderStroke(2.dp, colors.onBackground) else BorderStroke(1.dp, colors.surfaceVariant)
 
     Box(
         modifier = modifier
@@ -215,8 +214,7 @@ fun CircleActionButton(
     enabled: Boolean = true
 ) {
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val colors = MovieDetailsTheme.colors
-    val dimens = MovieDetailsTheme.dimens
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) 1.15f else 1f,
@@ -224,9 +222,9 @@ fun CircleActionButton(
         label = "circleBtnScale"
     )
 
-    val background = if (isFocused) colors.primary else colors.surfaceElevated.copy(alpha = 0.75f)
-    val border = if (isFocused) BorderStroke(2.dp, colors.onBackground) else BorderStroke(1.dp, colors.border)
-    val iconTint = if (isFocused) colors.onPrimary else colors.textPrimary
+    val background = if (isFocused) colors.primary else colors.surfaceContainer.copy(alpha = 0.75f)
+    val border = if (isFocused) BorderStroke(2.dp, colors.onBackground) else BorderStroke(1.dp, colors.surfaceVariant)
+    val iconTint = if (isFocused) Color.White else colors.onBackground
 
     Box(
         modifier = modifier
@@ -256,7 +254,7 @@ fun CircleActionButton(
             painter = icon,
             contentDescription = contentDescription,
             tint = iconTint,
-            modifier = Modifier.size(dimens.iconM)
+            modifier = Modifier.size(20.dp)
         )
     }
 }

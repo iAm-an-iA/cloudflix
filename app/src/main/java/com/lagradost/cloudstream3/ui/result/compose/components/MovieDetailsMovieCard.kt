@@ -40,11 +40,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @Composable
 private fun CardImageOrPlaceholder(title: String, imageUrl: String?) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     if (!imageUrl.isNullOrBlank()) {
         AsyncImage(
             model = imageUrl,
@@ -61,7 +61,7 @@ private fun CardImageOrPlaceholder(title: String, imageUrl: String?) {
         ) {
             Text(
                 text = title.take(2).uppercase(),
-                color = colors.textSecondary,
+                color = colors.onSurfaceVariant,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold
             )
@@ -71,7 +71,7 @@ private fun CardImageOrPlaceholder(title: String, imageUrl: String?) {
 
 @Composable
 private fun BoxScope.CardPosterBottomTitle(title: String) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -81,7 +81,7 @@ private fun BoxScope.CardPosterBottomTitle(title: String) {
     ) {
         Text(
             text = title,
-            color = colors.textPrimary,
+            color = colors.onBackground,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -92,14 +92,13 @@ private fun BoxScope.CardPosterBottomTitle(title: String) {
 
 @Composable
 private fun BoxScope.CardProgressBar(progress: Float) {
-    val dimens = MovieDetailsTheme.dimens
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.progressHeight)
+            .height(4.dp)
             .align(Alignment.BottomCenter)
-            .background(colors.border)
+            .background(colors.surfaceVariant)
     ) {
         Box(
             modifier = Modifier
@@ -112,7 +111,7 @@ private fun BoxScope.CardProgressBar(progress: Float) {
 
 @Composable
 private fun BoxScope.CardBadge(badge: MovieBadgeType) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Box(
         modifier = Modifier
             .align(Alignment.TopStart)
@@ -123,7 +122,7 @@ private fun BoxScope.CardBadge(badge: MovieBadgeType) {
     ) {
         Text(
             text = stringResource(id = badge.stringRes),
-            color = colors.onPrimary,
+            color = Color.White,
             fontSize = 9.sp,
             fontWeight = FontWeight.Bold
         )
@@ -179,11 +178,11 @@ private fun BoxScope.CardOverlays(
 
 @Composable
 private fun CardExternalTitle(title: String, isFocused: Boolean) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Spacer(modifier = Modifier.height(6.dp))
     Text(
         text = title,
-        color = if (isFocused) colors.textPrimary else colors.textSecondary,
+        color = if (isFocused) colors.onBackground else colors.onSurfaceVariant,
         fontSize = 13.sp,
         fontWeight = FontWeight.Medium,
         maxLines = 1,
@@ -212,8 +211,7 @@ fun MovieDetailsMovieCard(
     enabled: Boolean = true
 ) {
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val dimens = MovieDetailsTheme.dimens
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) MovieDetailsTokens.FOCUS_SCALE_FACTOR else 1f,
@@ -231,9 +229,9 @@ fun MovieDetailsMovieCard(
     val imageUrl = resolveImageUrl(type, posterUrl, backdropUrl)
 
     val border = if (isFocused) {
-        BorderStroke(dimens.borderFocus, colors.primary)
+        BorderStroke(2.dp, colors.primary)
     } else {
-        BorderStroke(dimens.borderSubtle, colors.border)
+        BorderStroke(1.dp, colors.surfaceVariant)
     }
 
     Box(

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -15,8 +16,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lagradost.cloudstream3.ActorData
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 import com.lagradost.cloudstream3.ui.result.compose.components.CastMemberCard
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
 
 @Composable
 fun CastAndCrewSection(
@@ -27,31 +28,27 @@ fun CastAndCrewSection(
 ) {
     if (actors.isEmpty()) return
 
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
-    val dimens = MovieDetailsTheme.dimens
-
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(top = dimens.spacing3Xl)
+            .padding(top = 32.dp)
     ) {
         Text(
             text = stringResource(id = R.string.cast_label).trimEnd(':'),
-            style = typography.boldTitle2,
+            style = MaterialTheme.typography.titleLarge,
             fontSize = 22.sp,
-            color = colors.textPrimary,
+            color = CloudStreamTheme.colors.onBackground,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = dimens.spacing2Xl)
-                .padding(bottom = dimens.spacingL)
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 16.dp)
         )
 
         LazyRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 4.dp),
-            contentPadding = PaddingValues(horizontal = dimens.spacing2Xl, vertical = 6.dp),
+            contentPadding = PaddingValues(horizontal = 24.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(14.dp)
         ) {
             items(

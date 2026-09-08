@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -49,10 +49,10 @@ import coil3.request.ImageRequest
 import coil3.request.bitmapConfig
 import coil3.request.crossfade
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 import com.lagradost.cloudstream3.ui.result.compose.components.CircleActionButton
 import com.lagradost.cloudstream3.ui.result.compose.components.HeroPlayButton
 import com.lagradost.cloudstream3.ui.result.compose.components.HeroTrailerButton
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
 
 @Composable
 private fun HeroBackdrop(
@@ -96,44 +96,37 @@ private fun HeroBackdrop(
 
 @Composable
 private fun BoxScope.HeroScrimOverlay() {
-    val colors = MovieDetailsTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .fillMaxHeight(0.5f)
             .align(Alignment.BottomCenter)
-            .background(colors.background.copy(alpha = 0.85f))
+            .background(CloudStreamTheme.colors.background.copy(alpha = 0.85f))
     )
 }
 
 @Composable
 private fun BoxScope.HeroProviderBadge(providerName: String?) {
     if (providerName.isNullOrBlank()) return
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
-    val dimens = MovieDetailsTheme.dimens
 
     Box(
         modifier = Modifier
             .align(Alignment.TopEnd)
-            .padding(dimens.spacing2Xl)
+            .padding(24.dp)
     ) {
         Text(
             text = providerName.uppercase(),
-            style = typography.boldTitle2.copy(
+            style = MaterialTheme.typography.titleLarge.copy(
                 fontWeight = FontWeight.Black,
                 letterSpacing = (-0.8).sp
             ),
-            color = colors.primary
+            color = CloudStreamTheme.colors.primary
         )
     }
 }
 
 @Composable
 private fun HeroTitleOrLogo(title: String, logoUrl: String?) {
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
-
     if (!logoUrl.isNullOrBlank()) {
         val context = LocalContext.current
         val logoRequest = remember(logoUrl) {
@@ -158,9 +151,9 @@ private fun HeroTitleOrLogo(title: String, logoUrl: String?) {
     } else {
         Text(
             text = title,
-            style = typography.boldTitle1,
+            style = MaterialTheme.typography.headlineLarge,
             fontSize = 32.sp,
-            color = colors.textPrimary,
+            color = CloudStreamTheme.colors.onBackground,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis
         )
@@ -178,10 +171,9 @@ private fun HeroActionButtons(
     likeInteractionSource: MutableInteractionSource,
     searchInteractionSource: MutableInteractionSource
 ) {
-    val dimens = MovieDetailsTheme.dimens
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimens.spacingM)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         CircleActionButton(
             icon = painterResource(
@@ -240,14 +232,13 @@ private fun BoxScope.HeroFocusOverlay(
     onSearchClick: (() -> Unit)?,
     hasTrailers: Boolean
 ) {
-    val dimens = MovieDetailsTheme.dimens
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .align(Alignment.TopStart)
-            .padding(horizontal = dimens.spacing2Xl, vertical = dimens.spacing2Xl)
+            .padding(horizontal = 24.dp, vertical = 24.dp)
             .zIndex(50f),
-        verticalArrangement = Arrangement.spacedBy(dimens.spacingM)
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Box(
             modifier = Modifier
@@ -270,7 +261,7 @@ private fun BoxScope.HeroFocusOverlay(
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(dimens.spacingM)
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 Box(
                     modifier = Modifier
@@ -351,8 +342,6 @@ fun HeroBannerSection(
     onSearchClick: (() -> Unit)?,
     modifier: Modifier = Modifier
 ) {
-    val dimens = MovieDetailsTheme.dimens
-
     Box(
         modifier = modifier
             .fillMaxWidth()
@@ -384,14 +373,14 @@ fun HeroBannerSection(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomStart)
-                .padding(horizontal = dimens.spacing2Xl, vertical = dimens.spacingL),
+                .padding(horizontal = 24.dp, vertical = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.Bottom
         ) {
             Column {
                 HeroTitleOrLogo(title = title, logoUrl = logoUrl)
 
-                Spacer(modifier = Modifier.height(dimens.spacingL))
+                Spacer(modifier = Modifier.height(16.dp))
 
                 HeroPlayButton(
                     onClick = onPlayClick,
@@ -402,7 +391,7 @@ fun HeroBannerSection(
                     enabled = false
                 )
 
-                Spacer(modifier = Modifier.height(dimens.spacingM))
+                Spacer(modifier = Modifier.height(12.dp))
 
                 HeroActionButtons(
                     isInWatchList = isInWatchList,

@@ -12,11 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 import com.lagradost.cloudstream3.ui.result.compose.components.AiringScheduleBanner
 import com.lagradost.cloudstream3.ui.result.compose.components.SeasonDropdown
 import com.lagradost.cloudstream3.ui.result.compose.model.AiringScheduleUiState
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
 
 @Composable
 fun EpisodesHeaderSection(
@@ -35,27 +36,23 @@ fun EpisodesHeaderSection(
     onRangeTextChange: (String) -> Unit,
     airingSchedule: AiringScheduleUiState? = null
 ) {
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
-    val dimens = MovieDetailsTheme.dimens
-
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = dimens.spacing2Xl)
-            .padding(top = dimens.spacing2Xl, bottom = dimens.spacingL),
-        verticalArrangement = Arrangement.spacedBy(dimens.spacingM)
+            .padding(horizontal = 24.dp)
+            .padding(top = 24.dp, bottom = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(dimens.spacingL),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
                 text = stringResource(id = R.string.episodes),
-                style = typography.boldTitle2,
+                style = MaterialTheme.typography.titleLarge,
                 fontSize = 24.sp,
-                color = colors.textPrimary
+                color = CloudStreamTheme.colors.onBackground
             )
 
             if (seasonOptions.size > 1) {

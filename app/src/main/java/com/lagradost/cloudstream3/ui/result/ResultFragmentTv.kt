@@ -39,7 +39,12 @@ import com.lagradost.cloudstream3.ui.result.compose.MovieDetailsComposeScreen
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieDetailsAction
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieDetailsUiState
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieTrailerData
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import androidx.compose.runtime.getValue
+import com.lagradost.cloudstream4.rememberAppSettings
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
+import com.lagradost.cloudstream4.theme.perfToColor
+import com.lagradost.cloudstream4.theme.perfToMode
+import com.mihon.presentation.settings.collectAsState
 import kotlinx.collections.immutable.toPersistentList
 import com.lagradost.cloudstream3.ui.search.SEARCH_ACTION_LOAD
 import com.lagradost.cloudstream3.ui.search.SearchClickCallback
@@ -230,7 +235,13 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
 
     private fun setupComposeView(binding: FragmentResultTvBinding, storedData: ResultFragment.StoredData) {
         binding.resultComposeView.setContent {
-            MovieDetailsTheme {
+            val settings = rememberAppSettings()
+            val mode by settings.ui.theme.collectAsState()
+            val primaryColor by settings.ui.primaryColor.collectAsState()
+            CloudStreamTheme(
+                mode = perfToMode(mode),
+                primaryColor = perfToColor(primaryColor),
+            ) {
                 MovieDetailsComposeScreen(
                     state = uiState,
                     onAction = { action ->

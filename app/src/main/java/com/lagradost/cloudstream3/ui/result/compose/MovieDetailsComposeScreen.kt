@@ -51,8 +51,10 @@ import com.lagradost.cloudstream3.ui.result.compose.sections.EpisodesHeaderSecti
 import com.lagradost.cloudstream3.ui.result.compose.sections.HeroBannerSection
 import com.lagradost.cloudstream3.ui.result.compose.sections.MovieInfoSynopsisSection
 import com.lagradost.cloudstream3.ui.result.compose.sections.RecommendationRowView
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsColors
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import androidx.compose.material3.MaterialTheme
+import com.lagradost.cloudstream4.theme.CloudStreamColorScheme
+import com.lagradost.cloudstream4.theme.CloudStreamPreviewTheme
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 private fun LazyListScope.episodesSection(
     episodesToDisplay: List<ResultEpisode>,
@@ -115,7 +117,7 @@ private fun LazyListScope.episodesSection(
             onLongClick = onEpLongClick,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MovieDetailsTheme.dimens.spacing2Xl, vertical = 6.dp)
+                .padding(horizontal = 24.dp, vertical = 6.dp)
         )
     }
 }
@@ -125,20 +127,20 @@ private fun LazyListScope.recommendationsSection(
     dynamicRecommendations: List<SearchResponse>?,
     onRecommendationClick: ((SearchResponse) -> Unit)?,
     showToast: (String) -> Unit,
-    colors: MovieDetailsColors
+    colors: CloudStreamColorScheme
 ) {
     if (chunkedRecommendations.isEmpty()) return
 
     item(key = "recommendations_header", contentType = "recommendations_header") {
         Text(
             text = stringResource(id = R.string.more_like_this),
-            style = MovieDetailsTheme.typography.boldTitle2,
+            style = MaterialTheme.typography.titleLarge,
             fontSize = 22.sp,
-            color = colors.textPrimary,
+            color = colors.onBackground,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = MovieDetailsTheme.dimens.spacing2Xl)
-                .padding(top = MovieDetailsTheme.dimens.spacing3Xl, bottom = MovieDetailsTheme.dimens.spacingL)
+                .padding(horizontal = 24.dp)
+                .padding(top = 32.dp, bottom = 16.dp)
         )
     }
 
@@ -217,7 +219,7 @@ fun MovieDetailsComposeScreen(
     val screenHeight = configuration.screenHeightDp.dp
     val heroHeight = remember(screenHeight) { (screenHeight * 0.65f).coerceAtLeast(380.dp) }
 
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     val lazyListState = rememberLazyListState()
 
     val playInteractionSource = remember { MutableInteractionSource() }
@@ -445,7 +447,7 @@ fun MovieDetailsComposeScreen(
 )
 @Composable
 private fun MovieDetailsComposeScreenPreview() {
-    MovieDetailsTheme {
+    CloudStreamPreviewTheme {
         MovieDetailsComposeScreen(
             state = MovieDetailsUiState(
                 title = "Stranger Things",
