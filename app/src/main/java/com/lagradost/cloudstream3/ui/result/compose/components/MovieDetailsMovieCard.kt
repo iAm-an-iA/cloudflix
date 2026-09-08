@@ -27,7 +27,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import coil3.compose.AsyncImage
 import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
-import com.lagradost.cloudstream3.ui.result.compose.theme.TransparentBlack90
 
 @Composable
 private fun CardImageOrPlaceholder(title: String, imageUrl: String?) {
@@ -78,12 +76,7 @@ private fun BoxScope.CardPosterBottomTitle(title: String) {
         modifier = Modifier
             .fillMaxWidth()
             .align(Alignment.BottomCenter)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(Color.Transparent, TransparentBlack90),
-                    startY = 0f
-                )
-            )
+            .background(colors.background.copy(alpha = 0.85f))
             .padding(horizontal = 8.dp, vertical = 6.dp)
     ) {
         Text(
