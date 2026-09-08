@@ -31,7 +31,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
@@ -96,23 +95,14 @@ private fun HeroBackdrop(
 }
 
 @Composable
-private fun BoxScope.HeroGradientOverlay() {
+private fun BoxScope.HeroScrimOverlay() {
     val colors = MovieDetailsTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
-            .fillMaxHeight(0.7f)
+            .fillMaxHeight(0.5f)
             .align(Alignment.BottomCenter)
-            .background(
-                Brush.verticalGradient(
-                    colors = listOf(
-                        Color.Transparent,
-                        colors.background.copy(alpha = 0.5f),
-                        colors.background.copy(alpha = 0.92f),
-                        colors.background
-                    )
-                )
-            )
+            .background(colors.background.copy(alpha = 0.85f))
     )
 }
 
@@ -372,7 +362,7 @@ fun HeroBannerSection(
         HeroBackdrop(
             backdropUrl = backdropUrl,
         )
-        HeroGradientOverlay()
+        HeroScrimOverlay()
         HeroFocusOverlay(
             playButtonFocusRequester = playButtonFocusRequester,
             playInteractionSource = playInteractionSource,
