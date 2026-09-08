@@ -16,9 +16,11 @@ import androidx.core.view.isVisible
 import androidx.lifecycle.ViewModelProvider
 import com.google.android.material.bottomsheet.BottomSheetDialog
 import com.google.android.material.button.MaterialButton
+import com.lagradost.cloudstream3.Actor
 import com.lagradost.cloudstream3.ActorData
 import com.lagradost.cloudstream3.CommonActivity
 import com.lagradost.cloudstream3.DubStatus
+import com.lagradost.cloudstream3.ShowStatus
 import com.lagradost.cloudstream3.MainActivity.Companion.afterPluginsLoadedEvent
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.SearchResponse
@@ -34,8 +36,11 @@ import com.lagradost.cloudstream3.ui.quicksearch.QuickSearchFragment
 import com.lagradost.cloudstream3.ui.result.ResultFragment.getStoredData
 import com.lagradost.cloudstream3.ui.result.ResultFragment.updateUIEvent
 import com.lagradost.cloudstream3.ui.result.compose.MovieDetailsComposeScreen
+import com.lagradost.cloudstream3.ui.result.compose.model.MovieDetailsAction
+import com.lagradost.cloudstream3.ui.result.compose.model.MovieDetailsUiState
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieTrailerData
 import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import kotlinx.collections.immutable.toPersistentList
 import com.lagradost.cloudstream3.ui.search.SEARCH_ACTION_LOAD
 import com.lagradost.cloudstream3.ui.search.SearchClickCallback
 import com.lagradost.cloudstream3.ui.search.SearchHelper
@@ -58,24 +63,10 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
 
     private lateinit var viewModel: ResultViewModel2
 
-    private var composePageState by mutableStateOf<Resource<ResultData>?>(null)
-    private var composeEpisodesState by mutableStateOf<List<ResultEpisode>>(emptyList())
-    private var composeRecommendationsState by mutableStateOf<List<SearchResponse>>(emptyList())
-    private var composeActorsState by mutableStateOf<List<ActorData>>(emptyList())
-    private var composeWatchStatusState by mutableStateOf(WatchType.NONE)
-    private var composeFavoriteStatusState by mutableStateOf(false)
-    private var composeRawSeasonsState by mutableStateOf<List<Pair<UiText?, Int>>>(emptyList())
-    private var composeSeasonsState by mutableStateOf<List<String>>(emptyList())
-    private var composeSelectedSeasonIndexState by mutableStateOf(0)
-    private var composeDubSubSelectionsState by mutableStateOf<List<Pair<UiText?, DubStatus>>>(emptyList())
-    private var composeDubSubState by mutableStateOf<List<String>>(emptyList())
-    private var composeSelectedDubStatusIndexState by mutableStateOf(0)
-    private var composeRangeSelectionsState by mutableStateOf<List<Pair<UiText?, EpisodeRange>>>(emptyList())
-    private var composeRangesState by mutableStateOf<List<String>>(emptyList())
-    private var composeSelectedRangeIndexState by mutableStateOf(0)
-    private var composeTrailersDataState by mutableStateOf<List<MovieTrailerData>>(emptyList())
-    private var composeHasTrailersState by mutableStateOf(false)
-    private var composeResumeWatchingState by mutableStateOf<ResumeWatchingStatus?>(null)
+    private var uiState by mutableStateOf(MovieDetailsUiState())
+    private var rawSeasons by mutableStateOf<List<Pair<UiText?, Int>>>(emptyList())
+    private var dubSubSelections by mutableStateOf<List<Pair<UiText?, DubStatus>>>(emptyList())
+    private var rangeSelections by mutableStateOf<List<Pair<UiText?, EpisodeRange>>>(emptyList())
 
     override fun onDestroyView() {
         updateUIEvent -= ::updateUI
@@ -156,7 +147,7 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
     }
 
     private fun handlePlayClick(storedData: ResultFragment.StoredData) {
-        val resume = composeResumeWatchingState
+        val resume = uiState.resumeStatus
         if (resume != null) {
             viewModel.handleAction(
                 EpisodeClickEvent(
@@ -165,7 +156,7 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
                 )
             )
         } else {
-            val ep = composeEpisodesState.firstOrNull()
+            val ep = uiState.episodes.firstOrNull()
             if (ep != null) {
                 viewModel.handleAction(
                     EpisodeClickEvent(
@@ -184,8 +175,8 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
     }
 
     private fun handlePlayLongClick() {
-        val resume = composeResumeWatchingState
-        val ep = resume?.result ?: composeEpisodesState.firstOrNull() ?: (viewModel.movie.value as? Resource.Success)?.value?.second
+        val resume = uiState.resumeStatus
+        val ep = resume?.result ?: uiState.episodes.firstOrNull() ?: (viewModel.movie.value as? Resource.Success)?.value?.second
         if (ep != null) {
             viewModel.handleAction(
                 EpisodeClickEvent(
@@ -215,7 +206,7 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
     }
 
     private fun handleAddToListClick() {
-        val curStatus = composeWatchStatusState
+        val curStatus = viewModel.watchStatus.value ?: WatchType.NONE
         activity?.showBottomDialog(
             WatchType.entries.map { getString(it.stringRes) }.toList(),
             curStatus.ordinal,
@@ -240,125 +231,84 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
     private fun setupComposeView(binding: FragmentResultTvBinding, storedData: ResultFragment.StoredData) {
         binding.resultComposeView.setContent {
             MovieDetailsTheme {
-                val page = composePageState
-                if (page is Resource.Success) {
-                    val d = page.value
-                    val title = d.titleText.asStringNull(context) ?: d.title
-                    val provider = d.apiName.asStringNull(context) ?: storedData.apiName
-                    val plot = d.plotText.asStringNull(context) ?: ""
-                    val year = d.yearText?.asStringNull(context)
-                    val duration = d.durationText?.asStringNull(context)
-                    val rating = d.ratingText?.asStringNull(context)
-                    val contentRating = d.contentRatingText?.asStringNull(context)
-                    val genres = d.tags
-                    val castNames = d.actorsText?.asStringNull(context)
-                        ?.replace(Regex("""^Cast:\s*""", RegexOption.IGNORE_CASE), "")
-                        ?.split(",")
-                        ?.map { it.trim() }
-                        ?.filter { it.isNotBlank() }
-                        ?: emptyList()
-                    val actors = composeActorsState.ifEmpty {
-                        d.actors ?: castNames.map { ActorData(com.lagradost.cloudstream3.Actor(it)) }
-                    }
-                    val ongoingInfo = d.onGoingText?.asStringNull(context)
-                    val isOngoing = d.isOngoing ?: (d.showStatus?.let { it == com.lagradost.cloudstream3.ShowStatus.Ongoing } == true)
-
-                    MovieDetailsComposeScreen(
-                        title = title,
-                        providerName = provider,
-                        backdropUrl = d.posterBackgroundImage ?: d.posterImage,
-                        posterUrl = d.posterImage,
-                        logoUrl = d.logoUrl,
-                        matchScore = rating,
-                        releaseYear = year,
-                        seasonsCount = duration,
-                        maturityRating = contentRating,
-                        advisories = null,
-                        statusText = ongoingInfo,
-                        isOngoing = isOngoing,
-                        nextAiringUnixTime = d.nextAiringUnixTime,
-                        nextAiringEpisode = d.nextAiringEpisode?.asStringNull(context),
-                        nextAiringDate = d.nextAiringDate?.asStringNull(context),
-                        synopsis = plot,
-                        genres = genres,
-                        dynamicActors = actors,
-                        dynamicEpisodes = composeEpisodesState,
-                        dynamicRecommendations = composeRecommendationsState,
-                        dynamicSeasons = composeSeasonsState,
-                        selectedSeasonIndex = composeSelectedSeasonIndexState,
-                        dynamicDubs = composeDubSubState,
-                        selectedDubIndex = composeSelectedDubStatusIndexState,
-                        onDubSelect = { idx ->
-                            composeDubSubSelectionsState.getOrNull(idx)?.second?.let { dub ->
-                                viewModel.changeDubStatus(dub)
+                MovieDetailsComposeScreen(
+                    state = uiState,
+                    onAction = { action ->
+                        when (action) {
+                            is MovieDetailsAction.SelectSeason -> {
+                                val seasonNumber = rawSeasons.getOrNull(action.index)?.second ?: (action.index + 1)
+                                viewModel.changeSeason(seasonNumber)
                             }
-                        },
-                        dynamicRanges = composeRangesState,
-                        selectedRangeIndex = composeSelectedRangeIndexState,
-                        onRangeSelect = { idx ->
-                            composeRangeSelectionsState.getOrNull(idx)?.second?.let { range ->
-                                viewModel.changeRange(range)
+                            is MovieDetailsAction.SelectDub -> {
+                                dubSubSelections.getOrNull(action.index)?.second?.let { dub ->
+                                    viewModel.changeDubStatus(dub)
+                                }
                             }
-                        },
-                        dynamicTrailers = composeTrailersDataState,
-                        isInWatchList = composeWatchStatusState != WatchType.NONE,
-                        isFavorite = composeFavoriteStatusState,
-                        hasTrailers = composeHasTrailersState,
-                        resumeStatus = composeResumeWatchingState,
-                        isMovie = composeEpisodesState.isEmpty() || composeResumeWatchingState?.isMovie == true,
-                        onPlayClick = { handlePlayClick(storedData) },
-                        onPlayLongClick = { handlePlayLongClick() },
-                        onEpisodeClick = { ep ->
-                            viewModel.handleAction(
-                                EpisodeClickEvent(
-                                    storedData.playerAction,
-                                    ep
+                            is MovieDetailsAction.SelectRange -> {
+                                rangeSelections.getOrNull(action.index)?.second?.let { range ->
+                                    viewModel.changeRange(range)
+                                }
+                            }
+                            is MovieDetailsAction.ClickEpisode -> {
+                                viewModel.handleAction(
+                                    EpisodeClickEvent(
+                                        storedData.playerAction,
+                                        action.episode
+                                    )
                                 )
-                            )
-                        },
-                        onEpisodeLongClick = { ep ->
-                            viewModel.handleAction(
-                                EpisodeClickEvent(
-                                    ACTION_SHOW_OPTIONS,
-                                    ep
+                            }
+                            is MovieDetailsAction.LongClickEpisode -> {
+                                viewModel.handleAction(
+                                    EpisodeClickEvent(
+                                        ACTION_SHOW_OPTIONS,
+                                        action.episode
+                                    )
                                 )
-                            )
-                        },
-                        onSeasonSelect = { idx ->
-                            val seasonNumber = composeRawSeasonsState.getOrNull(idx)?.second ?: (idx + 1)
-                            viewModel.changeSeason(seasonNumber)
-                        },
-                        onAddToListClick = { handleAddToListClick() },
-                        onLikeClick = { handleLikeClick() },
-                        onTrailerClick = { handleTrailerClick() },
-                        onSearchClick = {
-                            QuickSearchFragment.pushSearch(activity, title)
-                        },
-                        onActorClick = { actorName ->
-                            QuickSearchFragment.pushSearch(activity, actorName)
-                        },
-                        onRecommendationClick = { rec ->
-                            SearchHelper.handleSearchClickCallback(
-                                SearchClickCallback(
-                                    SEARCH_ACTION_LOAD,
-                                    binding.root,
-                                    0,
-                                    rec
+                            }
+                            is MovieDetailsAction.PlayPrimary -> {
+                                handlePlayClick(storedData)
+                            }
+                            is MovieDetailsAction.PlayPrimaryLong -> {
+                                handlePlayLongClick()
+                            }
+                            is MovieDetailsAction.ClickTrailer -> {
+                                handleTrailerClick()
+                            }
+                            is MovieDetailsAction.ToggleBookmark -> {
+                                handleAddToListClick()
+                            }
+                            is MovieDetailsAction.ToggleFavorite -> {
+                                handleLikeClick()
+                            }
+                            is MovieDetailsAction.ClickSearch -> {
+                                QuickSearchFragment.pushSearch(activity, uiState.title)
+                            }
+                            is MovieDetailsAction.ClickRecommendation -> {
+                                SearchHelper.handleSearchClickCallback(
+                                    SearchClickCallback(
+                                        SEARCH_ACTION_LOAD,
+                                        binding.root,
+                                        0,
+                                        action.response
+                                    )
                                 )
-                            )
-                        },
-                        onCloseClick = {
-                            activity?.popCurrentPage()
+                            }
+                            is MovieDetailsAction.ClickActor -> {
+                                QuickSearchFragment.pushSearch(activity, action.actor.actor.name)
+                            }
                         }
-                    )
-                }
+                    }
+                )
             }
         }
     }
 
     private fun setupViewModelObservers(binding: FragmentResultTvBinding, storedData: ResultFragment.StoredData) {
         observeNullable(viewModel.resumeWatching) { resume ->
-            composeResumeWatchingState = resume
+            uiState = uiState.copy(
+                resumeStatus = resume,
+                isMovie = uiState.episodes.isEmpty() || resume?.isMovie == true
+            )
         }
 
         observe(viewModel.trailers) { trailersLinks ->
@@ -368,17 +318,16 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
                     runtime = "",
                     rawTrailer = extractedTrailerLink
                 )
-            }
-            composeTrailersDataState = trailerItems
-            composeHasTrailersState = trailerItems.isNotEmpty()
+            }.toPersistentList()
+            uiState = uiState.copy(trailers = trailerItems)
         }
 
         observeNullable(viewModel.favoriteStatus) { isFav ->
-            composeFavoriteStatusState = isFav == true
+            uiState = uiState.copy(isFavorite = isFav == true)
         }
 
         observe(viewModel.watchStatus) { watchType ->
-            composeWatchStatusState = watchType
+            uiState = uiState.copy(isInWatchList = watchType != WatchType.NONE)
         }
 
         observePopupsAndLoading()
@@ -447,51 +396,93 @@ class ResultFragmentTv : BaseFragment<FragmentResultTvBinding>(
 
     private fun observeSelectionsAndContent(binding: FragmentResultTvBinding, storedData: ResultFragment.StoredData) {
         observe(viewModel.selectedSeasonIndex) { selected ->
-            composeSelectedSeasonIndexState = selected
+            uiState = uiState.copy(selectedSeasonIndex = selected)
         }
 
         observe(viewModel.seasonSelections) {
-            composeRawSeasonsState = it
-            composeSeasonsState = it.map { s -> s.first?.asStringNull(context) ?: "" }
+            rawSeasons = it
+            uiState = uiState.copy(seasons = it.map { s -> s.first?.asStringNull(context) ?: "" }.toPersistentList())
         }
 
         observe(viewModel.dubSubSelections) {
-            composeDubSubSelectionsState = it
-            composeDubSubState = it.map { d -> d.first?.asStringNull(context) ?: "" }
+            dubSubSelections = it
+            uiState = uiState.copy(dubs = it.map { d -> d.first?.asStringNull(context) ?: "" }.toPersistentList())
         }
 
         observe(viewModel.selectedDubStatusIndex) {
-            composeSelectedDubStatusIndexState = it
+            uiState = uiState.copy(selectedDubIndex = it)
         }
 
         observe(viewModel.rangeSelections) {
-            composeRangeSelectionsState = it
-            composeRangesState = it.map { r -> r.first?.asStringNull(context) ?: "" }
+            rangeSelections = it
+            uiState = uiState.copy(ranges = it.map { r -> r.first?.asStringNull(context) ?: "" }.toPersistentList())
         }
 
         observe(viewModel.selectedRangeIndex) {
-            composeSelectedRangeIndexState = it
+            uiState = uiState.copy(selectedRangeIndex = it)
         }
 
         observe(viewModel.recommendations) { recommendations ->
-            composeRecommendationsState = recommendations
+            uiState = uiState.copy(recommendations = recommendations.toPersistentList())
         }
 
         observeNullable(viewModel.episodes) { episodes ->
             if (episodes == null) return@observeNullable
             if (episodes is Resource.Success) {
-                composeEpisodesState = episodes.value
+                val epList = episodes.value.toPersistentList()
+                uiState = uiState.copy(
+                    episodes = epList,
+                    isMovie = epList.isEmpty() || uiState.resumeStatus?.isMovie == true
+                )
             }
         }
 
         observeNullable(viewModel.page) { data ->
             if (data == null) return@observeNullable
-            composePageState = data
             binding.apply {
                 when (data) {
                     is Resource.Success -> {
                         val d = data.value
-                        composeActorsState = d.actors ?: emptyList()
+                        val title = d.titleText.asStringNull(context) ?: d.title
+                        val provider = d.apiName.asStringNull(context) ?: storedData.apiName
+                        val plot = d.plotText.asStringNull(context) ?: ""
+                        val year = d.yearText?.asStringNull(context)
+                        val duration = d.durationText?.asStringNull(context)
+                        val rating = d.ratingText?.asStringNull(context)
+                        val contentRating = d.contentRatingText?.asStringNull(context)
+                        val genres = d.tags.toPersistentList()
+                        val castNames = d.actorsText?.asStringNull(context)
+                            ?.replace(Regex("""^Cast:\s*""", RegexOption.IGNORE_CASE), "")
+                            ?.split(",")
+                            ?.map { it.trim() }
+                            ?.filter { it.isNotBlank() }
+                            ?: emptyList()
+                        val actors = (d.actors ?: castNames.map { ActorData(Actor(it)) }).toPersistentList()
+                        val ongoingInfo = d.onGoingText?.asStringNull(context)
+                        val isOngoing = d.isOngoing ?: (d.showStatus?.let { it == ShowStatus.Ongoing } == true)
+
+                        uiState = uiState.copy(
+                            title = title,
+                            providerName = provider,
+                            backdropUrl = d.posterBackgroundImage ?: d.posterImage,
+                            posterUrl = d.posterImage,
+                            logoUrl = d.logoUrl,
+                            matchScore = rating,
+                            releaseYear = year,
+                            seasonsCount = duration,
+                            maturityRating = contentRating,
+                            statusText = ongoingInfo,
+                            isOngoing = isOngoing,
+                            nextAiringUnixTime = d.nextAiringUnixTime,
+                            nextAiringEpisode = d.nextAiringEpisode?.asStringNull(context),
+                            nextAiringDate = d.nextAiringDate?.asStringNull(context),
+                            synopsis = plot,
+                            genres = genres,
+                            actors = actors,
+                            comingSoon = d.comingSoon,
+                            isLoaded = true
+                        )
+
                         resultComposeView.isVisible = true
                         resultLoading.isGone = true
                         resultLoadingError.isGone = true

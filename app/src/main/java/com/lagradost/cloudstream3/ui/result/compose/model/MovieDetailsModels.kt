@@ -2,10 +2,67 @@ package com.lagradost.cloudstream3.ui.result.compose.model
 
 import android.content.Context
 import androidx.compose.runtime.Immutable
+import com.lagradost.cloudstream3.ActorData
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream3.SearchResponse
 import com.lagradost.cloudstream3.ui.result.ResultEpisode
 import com.lagradost.cloudstream3.ui.result.ResumeWatchingStatus
 import com.lagradost.cloudstream3.ui.result.compose.components.MovieCardItem
+import kotlinx.collections.immutable.PersistentList
+import kotlinx.collections.immutable.persistentListOf
+
+@Immutable
+data class MovieDetailsUiState(
+    val title: String = "",
+    val providerName: String? = null,
+    val backdropUrl: String? = null,
+    val posterUrl: String? = null,
+    val logoUrl: String? = null,
+    val matchScore: String? = null,
+    val releaseYear: String? = null,
+    val seasonsCount: String? = null,
+    val maturityRating: String? = null,
+    val advisories: PersistentList<String> = persistentListOf(),
+    val statusText: String? = null,
+    val isOngoing: Boolean = false,
+    val nextAiringUnixTime: Long? = null,
+    val nextAiringEpisode: String? = null,
+    val nextAiringDate: String? = null,
+    val synopsis: String = "",
+    val genres: PersistentList<String> = persistentListOf(),
+    val actors: PersistentList<ActorData> = persistentListOf(),
+    val episodes: PersistentList<ResultEpisode> = persistentListOf(),
+    val recommendations: PersistentList<SearchResponse> = persistentListOf(),
+    val seasons: PersistentList<String> = persistentListOf(),
+    val selectedSeasonIndex: Int = 0,
+    val dubs: PersistentList<String> = persistentListOf(),
+    val selectedDubIndex: Int = 0,
+    val ranges: PersistentList<String> = persistentListOf(),
+    val selectedRangeIndex: Int = 0,
+    val resumeStatus: ResumeWatchingStatus? = null,
+    val isMovie: Boolean = false,
+    val isInWatchList: Boolean = false,
+    val isFavorite: Boolean = false,
+    val trailers: PersistentList<MovieTrailerData> = persistentListOf(),
+    val isLoaded: Boolean = false,
+    val comingSoon: Boolean = false
+)
+
+sealed interface MovieDetailsAction {
+    data class SelectSeason(val index: Int) : MovieDetailsAction
+    data class SelectDub(val index: Int) : MovieDetailsAction
+    data class SelectRange(val index: Int) : MovieDetailsAction
+    data class ClickEpisode(val episode: ResultEpisode) : MovieDetailsAction
+    data class LongClickEpisode(val episode: ResultEpisode) : MovieDetailsAction
+    data object PlayPrimary : MovieDetailsAction
+    data object PlayPrimaryLong : MovieDetailsAction
+    data object ClickTrailer : MovieDetailsAction
+    data object ToggleBookmark : MovieDetailsAction
+    data object ToggleFavorite : MovieDetailsAction
+    data object ClickSearch : MovieDetailsAction
+    data class ClickRecommendation(val response: SearchResponse) : MovieDetailsAction
+    data class ClickActor(val actor: ActorData) : MovieDetailsAction
+}
 
 @Immutable
 data class MovieTrailerData(
@@ -17,7 +74,7 @@ data class MovieTrailerData(
 @Immutable
 data class MovieRecommendationRow(
     val rowIndex: Int,
-    val items: List<MovieCardItem>
+    val items: PersistentList<MovieCardItem> = persistentListOf()
 )
 
 private fun formatEpisodeCode(context: Context, season: Int?, episode: Int?): String {
