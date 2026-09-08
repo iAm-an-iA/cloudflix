@@ -14,7 +14,6 @@ import com.lagradost.cloudstream3.ui.result.compose.components.MovieCardSize
 import com.lagradost.cloudstream3.ui.result.compose.components.MovieCardType
 import com.lagradost.cloudstream3.ui.result.compose.components.MovieDetailsMovieCard
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieRecommendationRow
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
 
 @Composable
 fun RecommendationRowView(
@@ -22,12 +21,11 @@ fun RecommendationRowView(
     onCardClick: (MovieCardItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val dimens = MovieDetailsTheme.dimens
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = dimens.spacing2Xl, vertical = 6.dp),
-        horizontalArrangement = Arrangement.spacedBy(dimens.spacingM)
+            .padding(horizontal = 24.dp, vertical = 6.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         row.items.forEach { cardItem ->
             Box(modifier = Modifier.weight(1f)) {

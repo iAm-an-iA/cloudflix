@@ -43,7 +43,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lagradost.cloudstream3.R
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @Composable
 private fun SeasonDropdownMenuItem(
@@ -51,13 +51,13 @@ private fun SeasonDropdownMenuItem(
     isSelected: Boolean,
     onOptionSelected: (String) -> Unit
 ) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     val optionInteractionSource = remember(option) { MutableInteractionSource() }
     val isOptionFocused by optionInteractionSource.collectIsFocusedAsState()
     val focusAlpha = if (colors.surface.luminance() < 0.5f) 0.22f else 0.12f
-    val focusColor = colors.onSurface.copy(alpha = focusAlpha)
-    val focusBorder = colors.onSurface.copy(alpha = 0.72f)
-    val itemTextColor = if (isSelected) colors.primary else colors.textPrimary
+    val focusColor = colors.onSurfaceVariant.copy(alpha = focusAlpha)
+    val focusBorder = colors.onSurfaceVariant.copy(alpha = 0.72f)
+    val itemTextColor = if (isSelected) colors.primary else colors.onBackground
 
     DropdownMenuItem(
         text = {
@@ -103,7 +103,7 @@ fun SeasonDropdown(
     var expanded by remember { mutableStateOf(false) }
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     val scale by animateFloatAsState(
         targetValue = if (isFocused) 1.05f else 1f,
@@ -117,7 +117,7 @@ fun SeasonDropdown(
 
     val borderStroke = when {
         isFocused || expanded -> BorderStroke(2.dp, colors.primary)
-        else -> BorderStroke(1.dp, colors.border)
+        else -> BorderStroke(1.dp, colors.surfaceVariant)
     }
 
     val backgroundColor = when {
@@ -152,7 +152,7 @@ fun SeasonDropdown(
         ) {
             Text(
                 text = selectedOption.ifEmpty { defaultSeasonText },
-                color = colors.textPrimary,
+                color = colors.onBackground,
                 fontSize = 14.sp,
                 fontWeight = FontWeight.Medium,
                 maxLines = 1,
@@ -163,7 +163,7 @@ fun SeasonDropdown(
             Icon(
                 painter = painterResource(id = R.drawable.ic_baseline_keyboard_arrow_down_24),
                 contentDescription = null,
-                tint = colors.textPrimary,
+                tint = colors.onBackground,
                 modifier = Modifier
                     .size(18.dp)
                     .rotate(rotationAngle)
@@ -175,7 +175,7 @@ fun SeasonDropdown(
             onDismissRequest = { expanded = false },
             modifier = Modifier
                 .background(colors.surface)
-                .border(BorderStroke(1.dp, colors.border), RoundedCornerShape(4.dp))
+                .border(BorderStroke(1.dp, colors.surfaceVariant), RoundedCornerShape(4.dp))
                 .heightIn(max = 280.dp)
         ) {
             options.forEach { option ->

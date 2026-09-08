@@ -31,11 +31,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieTrailerData
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
-import com.lagradost.cloudstream3.ui.result.compose.theme.PrimaryWhite
-import com.lagradost.cloudstream3.ui.result.compose.theme.TransparentBlack60
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @Composable
 fun TrailerItemCard(
@@ -45,9 +45,7 @@ fun TrailerItemCard(
 ) {
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val typography = MovieDetailsTheme.typography
-    val dimens = MovieDetailsTheme.dimens
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) MovieDetailsTokens.FOCUS_SCALE_FACTOR else 1f,
@@ -55,7 +53,7 @@ fun TrailerItemCard(
         label = "trailerScale"
     )
 
-    val border = if (isFocused) BorderStroke(dimens.borderFocus, colors.primary) else BorderStroke(dimens.borderSubtle, colors.border)
+    val border = if (isFocused) BorderStroke(2.dp, colors.primary) else BorderStroke(1.dp, colors.surfaceVariant)
 
     Column(
         modifier = modifier
@@ -66,7 +64,7 @@ fun TrailerItemCard(
                 scaleY = scaleState.value
             }
             .clip(MovieDetailsTokens.ShapeCardMedium)
-            .background(colors.surfaceElevated)
+            .background(colors.surfaceContainer)
             .border(border, MovieDetailsTokens.ShapeCardMedium)
             .clickable(
                 interactionSource = interactionSource,
@@ -86,14 +84,14 @@ fun TrailerItemCard(
                 modifier = Modifier
                     .size(42.dp)
                     .clip(CircleShape)
-                    .background(TransparentBlack60)
-                    .border(BorderStroke(1.5.dp, PrimaryWhite), CircleShape)
+                    .background(Color.Black.copy(alpha = 0.6f))
+                    .border(BorderStroke(1.5.dp, Color.White), CircleShape)
                     .align(Alignment.Center)
             ) {
                 Icon(
                     painter = painterResource(id = R.drawable.ic_baseline_play_arrow_24),
                     contentDescription = null,
-                    tint = PrimaryWhite,
+                    tint = Color.White,
                     modifier = Modifier
                         .size(20.dp)
                         .align(Alignment.Center)
@@ -104,21 +102,21 @@ fun TrailerItemCard(
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dimens.spacingM),
+                .padding(12.dp),
             verticalArrangement = Arrangement.spacedBy(4.dp)
         ) {
             Text(
                 text = trailer.title,
-                style = typography.mediumBody,
+                style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Bold,
-                color = colors.textPrimary,
+                color = colors.onBackground,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis
             )
             Text(
                 text = trailer.runtime,
-                style = typography.regularCaption2,
-                color = colors.textSecondary
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant
             )
         }
     }

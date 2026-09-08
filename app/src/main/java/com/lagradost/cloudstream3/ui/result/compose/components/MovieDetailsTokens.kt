@@ -4,9 +4,35 @@ import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Immutable
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.lagradost.cloudstream3.R
+
+val RatingGreen = Color(0xFF46D369)
+val RatingYellow = Color(0xFFFFB800)
+val RatingRed = Color(0xFFEB3942)
+
+fun getRatingScoreColor(scoreText: String?): Color {
+    if (scoreText.isNullOrBlank()) return RatingGreen
+    val text = scoreText.trim()
+    if (text.equals("New", ignoreCase = true)) return RatingGreen
+
+    val match = Regex("""(\d+(\.\d+)?)""").find(text)
+    if (match != null) {
+        val num = match.value.toDoubleOrNull() ?: return RatingGreen
+        val isPercentage = text.contains("%") || num > 10.0
+        val percentage = if (isPercentage) num else num * 10.0
+
+        return when {
+            percentage >= 70.0 -> RatingGreen
+            percentage >= 50.0 -> RatingYellow
+            else -> RatingRed
+        }
+    }
+
+    return RatingGreen
+}
 
 object MovieDetailsTokens {
     val ShapeCardSmall = RoundedCornerShape(4.dp)

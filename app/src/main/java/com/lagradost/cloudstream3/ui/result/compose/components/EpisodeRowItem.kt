@@ -49,11 +49,11 @@ import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.syncproviders.AccountManager.Companion.secondsToReadable
 import com.lagradost.cloudstream3.ui.result.ResultEpisode
 import com.lagradost.cloudstream3.ui.result.VideoWatchState
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
-import com.lagradost.cloudstream3.ui.result.compose.theme.PrimaryWhite
-import com.lagradost.cloudstream3.ui.result.compose.theme.TransparentBlack60
 import com.lagradost.cloudstream3.ui.result.getDisplayPosition
 import com.lagradost.cloudstream3.ui.result.getWatchProgress
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.graphics.Color
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 import com.lagradost.cloudstream3.utils.AppContextUtils.html
 import java.text.DateFormat
 import java.text.SimpleDateFormat
@@ -134,24 +134,30 @@ fun rememberEpisodeRowUiState(episode: ResultEpisode): EpisodeRowUiState {
 }
 
 @Composable
-private fun EpisodePlayStatusBadge(state: EpisodeRowUiState, modifier: Modifier = Modifier) {
+private fun EpisodePlayStatusBadge(
+    state: EpisodeRowUiState,
+    modifier: Modifier = Modifier
+) {
+    if (state.isUpcoming) return
+
     val iconRes = when {
-        state.isUpcoming -> R.drawable.hourglass_24
         state.isWatched -> R.drawable.ic_baseline_check_24
+        state.watchProgress > 0.05f -> R.drawable.ic_baseline_play_arrow_24
         else -> R.drawable.ic_baseline_play_arrow_24
     }
+
     Box(
         modifier = modifier
             .size(36.dp)
             .clip(CircleShape)
-            .background(TransparentBlack60)
-            .border(BorderStroke(1.dp, PrimaryWhite), CircleShape),
+            .background(Color.Black.copy(alpha = 0.6f))
+            .border(BorderStroke(1.5.dp, Color.White), CircleShape),
         contentAlignment = Alignment.Center
     ) {
         Icon(
             painter = painterResource(id = iconRes),
             contentDescription = null,
-            tint = PrimaryWhite,
+            tint = Color.White,
             modifier = Modifier.size(16.dp)
         )
     }
@@ -159,13 +165,13 @@ private fun EpisodePlayStatusBadge(state: EpisodeRowUiState, modifier: Modifier 
 
 @Composable
 private fun BoxScope.EpisodeProgressBar(watchProgress: Float) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .height(4.dp)
             .align(Alignment.BottomStart)
-            .background(colors.border)
+            .background(colors.surfaceVariant)
     ) {
         Box(
             modifier = Modifier
@@ -178,7 +184,7 @@ private fun BoxScope.EpisodeProgressBar(watchProgress: Float) {
 
 @Composable
 private fun EpisodeThumbnail(episode: ResultEpisode, state: EpisodeRowUiState) {
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
     Box(
         modifier = Modifier
             .width(160.dp)
@@ -208,8 +214,7 @@ private fun EpisodeThumbnail(episode: ResultEpisode, state: EpisodeRowUiState) {
 
 @Composable
 private fun EpisodeTitleRow(state: EpisodeRowUiState) {
-    val typography = MovieDetailsTheme.typography
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -220,14 +225,14 @@ private fun EpisodeTitleRow(state: EpisodeRowUiState) {
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(4.dp))
-                    .background(colors.surfaceElevated)
-                    .border(BorderStroke(1.dp, colors.border), RoundedCornerShape(4.dp))
+                    .background(colors.surfaceContainer)
+                    .border(BorderStroke(1.dp, colors.surfaceVariant), RoundedCornerShape(4.dp))
                     .padding(horizontal = 6.dp, vertical = 2.dp)
             ) {
                 Text(
                     text = stringResource(R.string.filler),
-                    style = typography.regularCaption2,
-                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onBackground,
                     fontSize = 11.sp,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -235,9 +240,9 @@ private fun EpisodeTitleRow(state: EpisodeRowUiState) {
         }
         Text(
             text = state.title,
-            style = typography.mediumBody,
+            style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
-            color = colors.textPrimary,
+            color = colors.onBackground,
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.weight(1f, fill = false)
@@ -248,8 +253,7 @@ private fun EpisodeTitleRow(state: EpisodeRowUiState) {
 @Composable
 private fun EpisodeMetaRow(state: EpisodeRowUiState) {
     if (!state.hasMeta) return
-    val typography = MovieDetailsTheme.typography
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     Row(
         modifier = Modifier.fillMaxWidth(),
@@ -259,22 +263,22 @@ private fun EpisodeMetaRow(state: EpisodeRowUiState) {
         if (state.ratingText != null) {
             Text(
                 text = state.ratingText,
-                style = typography.regularCaption1,
-                color = colors.textSecondary
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceVariant
             )
         }
         if (!state.runtimeText.isNullOrBlank()) {
             Text(
                 text = state.runtimeText,
-                style = typography.regularCaption1,
-                color = colors.textSecondary
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceVariant
             )
         }
         if (!state.airDateText.isNullOrBlank()) {
             Text(
                 text = state.airDateText,
-                style = typography.regularCaption1,
-                color = colors.textSecondary
+                style = MaterialTheme.typography.labelMedium,
+                color = colors.onSurfaceVariant
             )
         }
     }
@@ -282,8 +286,7 @@ private fun EpisodeMetaRow(state: EpisodeRowUiState) {
 
 @Composable
 private fun EpisodeInfoColumn(state: EpisodeRowUiState, modifier: Modifier = Modifier) {
-    val typography = MovieDetailsTheme.typography
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     Column(
         modifier = modifier.fillMaxWidth(),
@@ -295,8 +298,8 @@ private fun EpisodeInfoColumn(state: EpisodeRowUiState, modifier: Modifier = Mod
         if (!state.description.isNullOrBlank()) {
             Text(
                 text = state.description,
-                style = typography.regularCaption1,
-                color = colors.textMuted,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.7f),
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
                 lineHeight = 18.sp
@@ -316,9 +319,7 @@ fun EpisodeRowItem(
     val state = rememberEpisodeRowUiState(episode)
     val interactionSource = remember { MutableInteractionSource() }
     val isFocused by interactionSource.collectIsFocusedAsState()
-    val typography = MovieDetailsTheme.typography
-    val dimens = MovieDetailsTheme.dimens
-    val colors = MovieDetailsTheme.colors
+    val colors = CloudStreamTheme.colors
 
     val scaleState = animateFloatAsState(
         targetValue = if (isFocused) 1.02f else 1f,
@@ -326,8 +327,8 @@ fun EpisodeRowItem(
         label = "episodeScale"
     )
 
-    val background = if (isFocused) colors.surfaceElevated else colors.surface
-    val border = if (isFocused) BorderStroke(dimens.borderFocus, colors.primary) else null
+    val background = if (isFocused) colors.surfaceContainer else colors.surface
+    val border = if (isFocused) BorderStroke(2.dp, colors.primary) else null
 
     Row(
         modifier = modifier
@@ -348,15 +349,15 @@ fun EpisodeRowItem(
                 onLongClick = onLongClick
             )
             .focusable(interactionSource = interactionSource)
-            .padding(dimens.spacingL),
+            .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(dimens.spacingL)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Text(
             text = state.episodeNumberText,
-            style = typography.boldTitle1,
+            style = MaterialTheme.typography.headlineMedium,
             fontSize = 24.sp,
-            color = colors.textSecondary,
+            color = colors.onSurfaceVariant,
             modifier = Modifier.width(32.dp)
         )
 

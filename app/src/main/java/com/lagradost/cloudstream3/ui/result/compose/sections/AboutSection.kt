@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,8 +26,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lagradost.cloudstream3.R
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 import com.lagradost.cloudstream3.ui.result.compose.components.MovieDetailsTokens
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
 
 @Composable
 fun AboutMetadataRow(
@@ -34,23 +35,20 @@ fun AboutMetadataRow(
     value: String,
     modifier: Modifier = Modifier
 ) {
-    val typography = MovieDetailsTheme.typography
-    val colors = MovieDetailsTheme.colors
-
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         Text(
             text = if (label.endsWith(":")) label else "$label:",
-            style = typography.regularCaption1,
-            color = colors.textSecondary,
+            style = MaterialTheme.typography.labelSmall,
+            color = CloudStreamTheme.colors.onSurfaceVariant,
             modifier = Modifier.width(130.dp)
         )
         Text(
             text = value,
-            style = typography.regularCaption1,
-            color = colors.textPrimary,
+            style = MaterialTheme.typography.labelSmall,
+            color = CloudStreamTheme.colors.onBackground,
             modifier = Modifier.weight(1f)
         )
     }
@@ -68,37 +66,34 @@ fun AboutSection(
     advisories: String?,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
-    val dimens = MovieDetailsTheme.dimens
     val aboutInteractionSource = remember { MutableInteractionSource() }
     val isAboutFocused by aboutInteractionSource.collectIsFocusedAsState()
-    val aboutBorder = if (isAboutFocused) BorderStroke(dimens.borderFocus, colors.primary) else BorderStroke(1.dp, colors.border)
+    val aboutBorder = if (isAboutFocused) BorderStroke(2.dp, CloudStreamTheme.colors.primary) else BorderStroke(1.dp, CloudStreamTheme.colors.surfaceVariant)
 
     Box(
         modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = dimens.spacing2Xl)
-            .padding(top = dimens.spacing3Xl, bottom = dimens.spacing3Xl)
+            .padding(horizontal = 24.dp)
+            .padding(top = 32.dp, bottom = 32.dp)
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MovieDetailsTokens.ShapeCardMedium)
-                .background(if (isAboutFocused) colors.surfaceElevated else colors.surface)
+                .background(if (isAboutFocused) CloudStreamTheme.colors.surfaceContainer else CloudStreamTheme.colors.surface)
                 .border(aboutBorder, MovieDetailsTokens.ShapeCardMedium)
                 .focusable(interactionSource = aboutInteractionSource)
-                .padding(dimens.spacing2Xl),
-            verticalArrangement = Arrangement.spacedBy(dimens.spacingM)
+                .padding(24.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
             Text(
                 text = stringResource(id = R.string.about_title_format, title),
-                style = typography.boldTitle2,
+                style = MaterialTheme.typography.titleLarge,
                 fontSize = 20.sp,
-                color = colors.textPrimary
+                color = CloudStreamTheme.colors.onBackground
             )
 
-            Spacer(modifier = Modifier.height(dimens.spacingXs))
+            Spacer(modifier = Modifier.height(4.dp))
 
             if (!creator.isNullOrBlank()) {
                 AboutMetadataRow(label = stringResource(id = R.string.creator_label), value = creator)

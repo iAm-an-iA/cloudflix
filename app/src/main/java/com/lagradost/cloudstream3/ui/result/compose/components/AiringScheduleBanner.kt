@@ -21,17 +21,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material3.MaterialTheme
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.ui.result.compose.model.AiringScheduleUiState
-import com.lagradost.cloudstream3.ui.result.compose.theme.MovieDetailsTheme
+import com.lagradost.cloudstream4.theme.CloudStreamTheme
 
 @Composable
 fun AiringScheduleBanner(
     airingSchedule: AiringScheduleUiState,
     modifier: Modifier = Modifier
 ) {
-    val colors = MovieDetailsTheme.colors
-    val typography = MovieDetailsTheme.typography
+    val colors = CloudStreamTheme.colors
     val countdown = rememberAiringCountdown(airingSchedule.targetUnixTimeSeconds)
         ?: airingSchedule.fallbackDateText
         ?: return
@@ -42,8 +42,8 @@ fun AiringScheduleBanner(
         modifier = modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(8.dp))
-            .background(colors.surfaceElevated)
-            .border(BorderStroke(1.dp, colors.orangeAccent.copy(alpha = 0.35f)), RoundedCornerShape(8.dp))
+            .background(colors.surfaceContainer)
+            .border(BorderStroke(1.dp, colors.ongoing.copy(alpha = 0.35f)), RoundedCornerShape(8.dp))
             .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
         Row(
@@ -54,7 +54,7 @@ fun AiringScheduleBanner(
                 modifier = Modifier
                     .size(34.dp)
                     .clip(CircleShape)
-                    .background(colors.orangeAccent.copy(alpha = 0.2f)),
+                    .background(colors.ongoing.copy(alpha = 0.2f)),
                 contentAlignment = Alignment.Center
             ) {
                 Text(text = "📅", fontSize = 16.sp)
@@ -65,15 +65,15 @@ fun AiringScheduleBanner(
             ) {
                 Text(
                     text = airingSchedule.displayEpisodeLong ?: stringResource(id = R.string.next_episode),
-                    style = typography.mediumSmallBody,
-                    color = colors.textPrimary,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onBackground,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold
                 )
                 Text(
                     text = if (releaseInfo != null) "$releaseInfo ($countdown)" else countdown,
-                    style = typography.regularCaption1,
-                    color = colors.orangeAccent,
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.ongoing,
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium
                 )
