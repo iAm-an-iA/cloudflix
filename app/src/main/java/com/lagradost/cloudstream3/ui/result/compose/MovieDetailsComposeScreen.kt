@@ -29,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.lagradost.cloudstream3.Actor
 import com.lagradost.cloudstream3.ActorData
 import com.lagradost.cloudstream3.R
 import com.lagradost.cloudstream3.SearchResponse
@@ -37,10 +38,13 @@ import com.lagradost.cloudstream3.ui.result.ResumeWatchingStatus
 import com.lagradost.cloudstream3.ui.result.compose.components.EpisodeRowItem
 import com.lagradost.cloudstream3.ui.result.compose.components.MovieCardItem
 import com.lagradost.cloudstream3.ui.result.compose.components.MovieCardType
+import com.lagradost.cloudstream3.ui.result.compose.model.MovieDetailsAction
+import com.lagradost.cloudstream3.ui.result.compose.model.MovieDetailsUiState
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieRecommendationRow
 import com.lagradost.cloudstream3.ui.result.compose.model.MovieTrailerData
 import com.lagradost.cloudstream3.ui.result.compose.model.getPlayButtonText
 import com.lagradost.cloudstream3.ui.result.compose.model.resolveAiringSchedule
+import kotlinx.collections.immutable.toPersistentList
 import com.lagradost.cloudstream3.ui.result.compose.sections.AboutSection
 import com.lagradost.cloudstream3.ui.result.compose.sections.CastAndCrewSection
 import com.lagradost.cloudstream3.ui.result.compose.sections.EpisodesHeaderSection
@@ -204,59 +208,9 @@ private fun LazyListScope.aboutSection(
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MovieDetailsComposeScreen(
-    modifier: Modifier = Modifier,
-    title: String = "",
-    providerName: String? = null,
-    backdropUrl: String? = null,
-    posterUrl: String? = null,
-    logoUrl: String? = null,
-    matchScore: String? = null,
-    releaseYear: String? = null,
-    seasonsCount: String? = null,
-    quality: String? = null,
-    maturityRating: String? = null,
-    advisories: String? = null,
-    top10RankText: String? = null,
-    synopsis: String = "",
-    cast: List<String> = emptyList(),
-    genres: List<String> = emptyList(),
-    moodTags: List<String> = emptyList(),
-    creator: String? = null,
-    writers: List<String> = emptyList(),
-    dynamicEpisodes: List<ResultEpisode>? = null,
-    dynamicRecommendations: List<SearchResponse>? = null,
-    dynamicActors: List<ActorData>? = null,
-    dynamicSeasons: List<String>? = null,
-    dynamicTrailers: List<MovieTrailerData>? = null,
-    resumeStatus: ResumeWatchingStatus? = null,
-    isMovie: Boolean = true,
-    selectedSeasonIndex: Int = 0,
-    dynamicDubs: List<String>? = null,
-    selectedDubIndex: Int = 0,
-    onDubSelect: ((Int) -> Unit)? = null,
-    dynamicRanges: List<String>? = null,
-    selectedRangeIndex: Int = 0,
-    onRangeSelect: ((Int) -> Unit)? = null,
-    onPlayLongClick: (() -> Unit)? = null,
-    onEpisodeLongClick: ((ResultEpisode) -> Unit)? = null,
-    statusText: String? = null,
-    isOngoing: Boolean = false,
-    nextAiringUnixTime: Long? = null,
-    nextAiringEpisode: String? = null,
-    nextAiringDate: String? = null,
-    isInWatchList: Boolean = false,
-    isFavorite: Boolean = false,
-    hasTrailers: Boolean = false,
-    onPlayClick: () -> Unit = {},
-    onEpisodeClick: ((ResultEpisode) -> Unit)? = null,
-    onSeasonSelect: ((Int) -> Unit)? = null,
-    onAddToListClick: () -> Unit = {},
-    onLikeClick: () -> Unit = {},
-    onTrailerClick: () -> Unit = {},
-    onSearchClick: (() -> Unit)? = null,
-    onActorClick: ((String) -> Unit)? = null,
-    onRecommendationClick: ((SearchResponse) -> Unit)? = null,
-    onCloseClick: () -> Unit = {}
+    state: MovieDetailsUiState,
+    onAction: (MovieDetailsAction) -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
     val configuration = LocalConfiguration.current
@@ -279,28 +233,19 @@ fun MovieDetailsComposeScreen(
         playButtonFocusRequester.requestFocus()
     }
 
-    val seasonOptions = remember(dynamicSeasons) {
-        dynamicSeasons ?: emptyList()
+    val seasonOptions = state.seasons
+    var selectedSeasonText by remember(state.selectedSeasonIndex, seasonOptions) {
+        mutableStateOf(seasonOptions.getOrElse(state.selectedSeasonIndex) { seasonOptions.firstOrNull() ?: "" })
     }
 
-    var selectedSeasonText by remember(selectedSeasonIndex, seasonOptions) {
-        mutableStateOf(seasonOptions.getOrElse(selectedSeasonIndex) { seasonOptions.firstOrNull() ?: "" })
+    val dubOptions = state.dubs
+    var selectedDubText by remember(state.selectedDubIndex, dubOptions) {
+        mutableStateOf(dubOptions.getOrElse(state.selectedDubIndex) { dubOptions.firstOrNull() ?: "" })
     }
 
-    val dubOptions = remember(dynamicDubs) {
-        dynamicDubs ?: emptyList()
-    }
-
-    var selectedDubText by remember(selectedDubIndex, dubOptions) {
-        mutableStateOf(dubOptions.getOrElse(selectedDubIndex) { dubOptions.firstOrNull() ?: "" })
-    }
-
-    val rangeOptions = remember(dynamicRanges) {
-        dynamicRanges ?: emptyList()
-    }
-
-    var selectedRangeText by remember(selectedRangeIndex, rangeOptions) {
-        mutableStateOf(rangeOptions.getOrElse(selectedRangeIndex) { rangeOptions.firstOrNull() ?: "" })
+    val rangeOptions = state.ranges
+    var selectedRangeText by remember(state.selectedRangeIndex, rangeOptions) {
+        mutableStateOf(rangeOptions.getOrElse(state.selectedRangeIndex) { rangeOptions.firstOrNull() ?: "" })
     }
 
     val showToast: (String) -> Unit = remember(context) {
@@ -309,34 +254,34 @@ fun MovieDetailsComposeScreen(
         }
     }
 
-    val episodesToDisplay = dynamicEpisodes ?: emptyList()
+    val episodesToDisplay = state.episodes
 
     val airingSchedule = remember(
-        statusText,
-        isOngoing,
-        nextAiringUnixTime,
-        nextAiringEpisode,
-        nextAiringDate,
+        state.statusText,
+        state.isOngoing,
+        state.nextAiringUnixTime,
+        state.nextAiringEpisode,
+        state.nextAiringDate,
         episodesToDisplay,
         context
     ) {
         resolveAiringSchedule(
             context = context,
-            statusText = statusText,
-            isOngoing = isOngoing,
-            nextAiringUnixTime = nextAiringUnixTime,
-            nextAiringEpisode = nextAiringEpisode,
-            nextAiringDate = nextAiringDate,
+            statusText = state.statusText,
+            isOngoing = state.isOngoing,
+            nextAiringUnixTime = state.nextAiringUnixTime,
+            nextAiringEpisode = state.nextAiringEpisode,
+            nextAiringDate = state.nextAiringDate,
             episodes = episodesToDisplay
         )
     }
 
-    val playButtonText = remember(resumeStatus, episodesToDisplay, isMovie, context) {
-        getPlayButtonText(context, resumeStatus, episodesToDisplay, isMovie)
+    val playButtonText = remember(state.resumeStatus, episodesToDisplay, state.isMovie, context) {
+        getPlayButtonText(context, state.resumeStatus, episodesToDisplay, state.isMovie)
     }
 
-    val resumeProgressFraction = remember(resumeStatus) {
-        val prog = resumeStatus?.progress
+    val resumeProgressFraction = remember(state.resumeStatus) {
+        val prog = state.resumeStatus?.progress
         if (prog != null && prog.maxProgress > 0) {
             prog.progress.toFloat() / prog.maxProgress.toFloat()
         } else {
@@ -344,15 +289,15 @@ fun MovieDetailsComposeScreen(
         }
     }
 
-    val castList = remember(dynamicActors, cast) {
-        dynamicActors?.map { it.actor.name }?.filter { it.isNotBlank() }?.ifEmpty { cast } ?: cast
+    val castList = remember(state.actors) {
+        state.actors.map { it.actor.name }.filter { it.isNotBlank() }
     }
 
-    val chunkedRecommendations = remember(dynamicRecommendations) {
-        if (dynamicRecommendations.isNullOrEmpty()) {
+    val chunkedRecommendations = remember(state.recommendations) {
+        if (state.recommendations.isEmpty()) {
             emptyList()
         } else {
-            dynamicRecommendations.map { rec ->
+            state.recommendations.map { rec ->
                 MovieCardItem(
                     title = rec.name,
                     type = MovieCardType.POSTER,
@@ -361,7 +306,7 @@ fun MovieDetailsComposeScreen(
                     showBottomTitle = true
                 )
             }.chunked(6).mapIndexed { idx, list ->
-                MovieRecommendationRow(idx, list)
+                MovieRecommendationRow(idx, list.toPersistentList())
             }
         }
     }
@@ -389,44 +334,44 @@ fun MovieDetailsComposeScreen(
         ) {
             item(key = "hero_banner", contentType = "hero_banner") {
                 HeroBannerSection(
-                    title = title,
-                    providerName = providerName,
-                    backdropUrl = backdropUrl,
-                    logoUrl = logoUrl,
+                    title = state.title,
+                    providerName = state.providerName,
+                    backdropUrl = state.backdropUrl,
+                    logoUrl = state.logoUrl,
                     heroHeight = heroHeight,
                     playButtonText = playButtonText,
                     resumeProgressFraction = resumeProgressFraction,
-                    isInWatchList = isInWatchList,
-                    isFavorite = isFavorite,
-                    hasTrailers = hasTrailers,
+                    isInWatchList = state.isInWatchList,
+                    isFavorite = state.isFavorite,
+                    hasTrailers = state.trailers.isNotEmpty(),
                     playButtonFocusRequester = playButtonFocusRequester,
                     playInteractionSource = playInteractionSource,
                     inMyListInteractionSource = inMyListInteractionSource,
                     likeInteractionSource = likeInteractionSource,
                     trailerInteractionSource = trailerInteractionSource,
                     searchInteractionSource = searchInteractionSource,
-                    onPlayClick = onPlayClick,
-                    onPlayLongClick = onPlayLongClick,
-                    onAddToListClick = onAddToListClick,
-                    onLikeClick = onLikeClick,
-                    onTrailerClick = onTrailerClick,
-                    onSearchClick = onSearchClick
+                    onPlayClick = { onAction(MovieDetailsAction.PlayPrimary) },
+                    onPlayLongClick = { onAction(MovieDetailsAction.PlayPrimaryLong) },
+                    onAddToListClick = { onAction(MovieDetailsAction.ToggleBookmark) },
+                    onLikeClick = { onAction(MovieDetailsAction.ToggleFavorite) },
+                    onTrailerClick = { onAction(MovieDetailsAction.ClickTrailer) },
+                    onSearchClick = { onAction(MovieDetailsAction.ClickSearch) }
                 )
             }
 
             item(key = "movie_info_synopsis", contentType = "movie_info") {
                 MovieInfoSynopsisSection(
-                    matchScore = matchScore,
-                    releaseYear = releaseYear,
-                    seasonsCount = seasonsCount,
-                    quality = quality,
-                    maturityRating = maturityRating,
-                    advisories = advisories,
-                    top10RankText = top10RankText,
-                    synopsis = synopsis,
+                    matchScore = state.matchScore,
+                    releaseYear = state.releaseYear,
+                    seasonsCount = state.seasonsCount,
+                    quality = null,
+                    maturityRating = state.maturityRating,
+                    advisories = if (state.advisories.isNotEmpty()) state.advisories.joinToString(", ") else null,
+                    top10RankText = null,
+                    synopsis = state.synopsis,
                     castList = castList,
-                    genres = genres,
-                    moodTags = moodTags,
+                    genres = state.genres,
+                    moodTags = emptyList(),
                     airingSchedule = airingSchedule
                 )
             }
@@ -435,44 +380,58 @@ fun MovieDetailsComposeScreen(
                 episodesToDisplay = episodesToDisplay,
                 seasonOptions = seasonOptions,
                 selectedSeasonText = selectedSeasonText,
-                onSeasonSelect = onSeasonSelect,
+                onSeasonSelect = { idx ->
+                    onAction(MovieDetailsAction.SelectSeason(idx))
+                },
                 onSeasonTextChange = { selectedSeasonText = it },
                 dubOptions = dubOptions,
                 selectedDubText = selectedDubText,
-                onDubSelect = onDubSelect,
+                onDubSelect = { idx ->
+                    onAction(MovieDetailsAction.SelectDub(idx))
+                },
                 onDubTextChange = { selectedDubText = it },
                 rangeOptions = rangeOptions,
                 selectedRangeText = selectedRangeText,
-                onRangeSelect = onRangeSelect,
+                onRangeSelect = { idx ->
+                    onAction(MovieDetailsAction.SelectRange(idx))
+                },
                 onRangeTextChange = { selectedRangeText = it },
                 airingSchedule = airingSchedule,
-                onEpisodeClick = onEpisodeClick,
-                onEpisodeLongClick = onEpisodeLongClick,
+                onEpisodeClick = { ep ->
+                    onAction(MovieDetailsAction.ClickEpisode(ep))
+                },
+                onEpisodeLongClick = { ep ->
+                    onAction(MovieDetailsAction.LongClickEpisode(ep))
+                },
                 showToast = showToast
             )
 
             recommendationsSection(
                 chunkedRecommendations = chunkedRecommendations,
-                dynamicRecommendations = dynamicRecommendations,
-                onRecommendationClick = onRecommendationClick,
+                dynamicRecommendations = state.recommendations,
+                onRecommendationClick = { rec ->
+                    onAction(MovieDetailsAction.ClickRecommendation(rec))
+                },
                 showToast = showToast,
                 colors = colors
             )
 
             castSection(
-                dynamicActors = dynamicActors,
-                onActorClick = onActorClick
+                dynamicActors = state.actors,
+                onActorClick = { actorName ->
+                    onAction(MovieDetailsAction.ClickActor(ActorData(Actor(actorName))))
+                }
             )
 
             aboutSection(
-                title = title,
-                creator = creator,
+                title = state.title,
+                creator = null,
                 castList = castList,
-                writers = writers,
-                genres = genres,
-                moodTags = moodTags,
-                maturityRating = maturityRating,
-                advisories = advisories
+                writers = emptyList(),
+                genres = state.genres,
+                moodTags = emptyList(),
+                maturityRating = state.maturityRating,
+                advisories = if (state.advisories.isNotEmpty()) state.advisories.joinToString(", ") else null
             )
         }
     }
@@ -488,25 +447,22 @@ fun MovieDetailsComposeScreen(
 private fun MovieDetailsComposeScreenPreview() {
     MovieDetailsTheme {
         MovieDetailsComposeScreen(
-            title = "Stranger Things",
-            providerName = "Netflix",
-            backdropUrl = null,
-            matchScore = "98% Match",
-            releaseYear = "2024",
-            seasonsCount = "4 Seasons",
-            quality = "4K ULTRA HD",
-            maturityRating = "16+",
-            advisories = "fear, language, violence",
-            top10RankText = "#1 in TV Shows Today",
-            statusText = "Ongoing",
-            isOngoing = true,
-            nextAiringEpisode = "Episode 5",
-            nextAiringDate = "2d 14h",
-            synopsis = "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.",
-            cast = listOf("Winona Ryder", "David Harbour", "Millie Bobby Brown", "Finn Wolfhard"),
-            genres = listOf("Sci-Fi", "Horror", "Drama"),
-            moodTags = listOf("Ominous", "Nostalgic", "Suspenseful"),
-            creator = "The Duffer Brothers"
+            state = MovieDetailsUiState(
+                title = "Stranger Things",
+                providerName = "Netflix",
+                matchScore = "98% Match",
+                releaseYear = "2024",
+                seasonsCount = "4 Seasons",
+                maturityRating = "16+",
+                advisories = kotlinx.collections.immutable.persistentListOf("fear", "language", "violence"),
+                statusText = "Ongoing",
+                isOngoing = true,
+                nextAiringEpisode = "Episode 5",
+                nextAiringDate = "2d 14h",
+                synopsis = "When a young boy vanishes, a small town uncovers a mystery involving secret experiments, terrifying supernatural forces and one strange little girl.",
+                genres = kotlinx.collections.immutable.persistentListOf("Sci-Fi", "Horror", "Drama")
+            ),
+            onAction = {}
         )
     }
 }
