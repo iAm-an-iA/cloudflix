@@ -101,7 +101,8 @@ class HomeViewModel : ViewModel() {
                         resume.parentId,
                         resume.episode,
                         resume.season,
-                        resume.isFromDownload
+                        resume.isFromDownload,
+                        updateTime = resume.updateTime
                     )
                 }
             }

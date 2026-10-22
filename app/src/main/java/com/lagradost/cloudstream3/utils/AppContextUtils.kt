@@ -151,7 +151,8 @@ object AppContextUtils {
     private fun buildWatchNextProgramUri(
         context: Context,
         card: DataStoreHelper.ResumeWatchingResult,
-        resumeWatching: DownloadObjects.ResumeWatching?
+        customId: String,
+        engagementTimeUtcMillis: Long
     ): WatchNextProgram {
         val isSeries = card.type?.isMovieType() == false
         val title = if (isSeries) {
@@ -173,10 +174,8 @@ object AppContextUtils {
             .setIntentUri((card.id?.let {
                 "$APP_STRING_RESUME_WATCHING://$it"
             } ?: card.url).toUri())
-            .setInternalProviderId(card.url)
-            .setLastEngagementTimeUtcMillis(
-                resumeWatching?.updateTime ?: System.currentTimeMillis()
-            )
+            .setInternalProviderId(customId)
+            .setLastEngagementTimeUtcMillis(engagementTimeUtcMillis)
 
         card.watchPos?.let {
             builder.setDurationMillis(it.duration.toInt())
@@ -299,15 +298,28 @@ object AppContextUtils {
     @Synchronized
     private fun getWatchNextProgramByVideoId(
         id: String,
+        legacyUrl: String,
         context: Context
     ): Pair<WatchNextProgram?, Long?> {
         return findFirstWatchNextProgram(context) { cursor ->
-            (cursor.getString(cursor.getColumnIndex(COLUMN_INTERNAL_PROVIDER_ID)) == id)
+            val providerId = cursor.getString(cursor.getColumnIndex(COLUMN_INTERNAL_PROVIDER_ID))
+            providerId == id || providerId == legacyUrl
         }
     }
 
     /** Prevents losing data when removing and adding simultaneously */
     private val continueWatchingLock = Mutex()
+
+    /** Ensures strictly descending engagement timestamps so launcher row order matches Continue Watching */
+    fun calculateEngagementTime(
+        rawTime: Long?,
+        lastAssignedTime: Long,
+        index: Int,
+        baseTime: Long
+    ): Long {
+        val candidate = rawTime ?: (baseTime - (index * 1000L))
+        return if (candidate < lastAssignedTime) candidate else lastAssignedTime - 1L
+    }
 
     // https://github.com/googlearchive/leanback-homescreen-channels/blob/master/app/src/main/java/com/google/android/tvhomescreenchannels/SampleTvProvider.java
     @SuppressLint("RestrictedApi")
@@ -317,21 +329,31 @@ object AppContextUtils {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.O) return
         val context = this
         continueWatchingLock.withLock {
-            // A way to get all last watched timestamps
             val timeStampHashMap = HashMap<Int, DownloadObjects.ResumeWatching>()
             getAllResumeStateIds()?.forEach { id ->
                 val lastWatched = getLastWatched(id) ?: return@forEach
                 timeStampHashMap[lastWatched.parentId] = lastWatched
             }
 
-            val currentProgramIds = data.mapNotNull { episodeInfo ->
+            val baseTime = System.currentTimeMillis()
+            var lastAssignedTime = Long.MAX_VALUE
+
+            val currentProgramIds = data.mapIndexedNotNull { index, episodeInfo ->
                 try {
-                    val customId = "${episodeInfo.id}|${episodeInfo.apiName}|${episodeInfo.url}"
-                    val (program, id) = getWatchNextProgramByVideoId(customId, context)
+                    val customId = "${episodeInfo.parentId ?: episodeInfo.id}|${episodeInfo.apiName}|${episodeInfo.url}"
+                    val (program, id) = getWatchNextProgramByVideoId(customId, episodeInfo.url, context)
+
+                    val rawTime = episodeInfo.updateTime
+                        ?: (episodeInfo.parentId ?: episodeInfo.id)?.let { timeStampHashMap[it]?.updateTime }
+
+                    val engagementTime = calculateEngagementTime(rawTime, lastAssignedTime, index, baseTime)
+                    lastAssignedTime = engagementTime
+
                     val nextProgram = buildWatchNextProgramUri(
                         context,
                         episodeInfo,
-                        timeStampHashMap[episodeInfo.id]
+                        customId,
+                        engagementTime
                     )
 
                     // If the program is already in the Watch Next row, update it

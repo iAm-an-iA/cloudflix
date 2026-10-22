@@ -517,6 +517,7 @@ object DataStoreHelper {
         @JsonProperty("quality") @SerialName("quality") override var quality: SearchQuality? = null,
         @JsonProperty("posterHeaders") @SerialName("posterHeaders") override var posterHeaders: Map<String, String>? = null,
         @JsonProperty("score") @SerialName("score") override var score: Score? = null,
+        @JsonProperty("updateTime") @SerialName("updateTime") val updateTime: Long? = null,
     ) : SearchResponse
 
     /**
